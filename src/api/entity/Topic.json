@@ -1,0 +1,76 @@
+{
+  "name": "Topic",
+  "type": "object",
+  "properties": {
+    "category_name": {
+      "type": "string",
+      "description": "所属类目名称"
+    },
+    "name": {
+      "type": "string",
+      "description": "主题名称，如情商段位来比拼"
+    },
+    "description": {
+      "type": "string",
+      "description": "主题描述"
+    },
+    "goal": {
+      "type": "string",
+      "description": "学习目标"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "初级",
+        "中级",
+        "高级"
+      ],
+      "description": "难度等级"
+    },
+    "estimated_time": {
+      "type": "number",
+      "description": "预计学习时间（分钟）"
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "应用场景"
+    },
+    "knowledge_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "video",
+              "audio",
+              "text"
+            ]
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "知识点内容"
+    },
+    "order": {
+      "type": "number",
+      "description": "排序"
+    }
+  },
+  "required": [
+    "category_name",
+    "name"
+  ]
+}

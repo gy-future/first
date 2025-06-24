@@ -1,0 +1,29 @@
+{
+  "name": "Category",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "类目名称，如结构化思维、招聘选人等"
+    },
+    "description": {
+      "type": "string",
+      "description": "类目描述"
+    },
+    "icon": {
+      "type": "string",
+      "description": "类目图标"
+    },
+    "color": {
+      "type": "string",
+      "description": "类目主题色"
+    },
+    "order": {
+      "type": "number",
+      "description": "排序"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

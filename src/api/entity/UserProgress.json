@@ -1,0 +1,72 @@
+{
+  "name": "UserProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "用户ID"
+    },
+    "topic_id": {
+      "type": "string",
+      "description": "主题ID"
+    },
+    "knowledge_learned": {
+      "type": "boolean",
+      "default": false,
+      "description": "是否已学习知识点"
+    },
+    "total_questions": {
+      "type": "number",
+      "default": 0,
+      "description": "总答题数"
+    },
+    "correct_answers": {
+      "type": "number",
+      "default": 0,
+      "description": "正确答题数"
+    },
+    "accuracy_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "正确率"
+    },
+    "best_score": {
+      "type": "number",
+      "default": 0,
+      "description": "最佳得分"
+    },
+    "training_count": {
+      "type": "number",
+      "default": 0,
+      "description": "训练次数"
+    },
+    "last_trained_date": {
+      "type": "string",
+      "format": "date",
+      "description": "最后训练日期"
+    },
+    "weak_points": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "薄弱知识点"
+    },
+    "mastery_level": {
+      "type": "string",
+      "enum": [
+        "未开始",
+        "初学",
+        "练习中",
+        "熟练",
+        "精通"
+      ],
+      "default": "未开始",
+      "description": "掌握程度"
+    }
+  },
+  "required": [
+    "user_id",
+    "topic_id"
+  ]
+}

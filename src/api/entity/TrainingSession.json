@@ -1,0 +1,70 @@
+{
+  "name": "TrainingSession",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "用户ID"
+    },
+    "topic_id": {
+      "type": "string",
+      "description": "主题ID"
+    },
+    "questions_answered": {
+      "type": "number",
+      "description": "已答题数"
+    },
+    "correct_count": {
+      "type": "number",
+      "description": "正确数量"
+    },
+    "total_score": {
+      "type": "number",
+      "description": "总得分"
+    },
+    "session_duration": {
+      "type": "number",
+      "description": "训练时长（秒）"
+    },
+    "completion_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "完成时间"
+    },
+    "feedback": {
+      "type": "object",
+      "properties": {
+        "overall_rating": {
+          "type": "string",
+          "enum": [
+            "优秀",
+            "良好",
+            "需提升"
+          ]
+        },
+        "strengths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "improvements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "next_recommendations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "user_id",
+    "topic_id"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "name": "Question",
+  "type": "object",
+  "properties": {
+    "topic_name": {
+      "type": "string",
+      "description": "所属主题名称"
+    },
+    "content": {
+      "type": "string",
+      "description": "题目内容"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "choice",
+        "voice"
+      ],
+      "description": "题目类型：选择题或语音回答"
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "is_correct": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "选择题选项（仅选择题类型使用）"
+    },
+    "correct_answer": {
+      "type": "string",
+      "description": "正确答案说明"
+    },
+    "analysis": {
+      "type": "string",
+      "description": "答案解析"
+    },
+    "knowledge_points": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "涉及的知识点"
+    },
+    "difficulty": {
+      "type": "number",
+      "description": "题目难度1-5"
+    },
+    "order": {
+      "type": "number",
+      "description": "排序"
+    }
+  },
+  "required": [
+    "topic_name",
+    "content",
+    "type"
+  ]
+}

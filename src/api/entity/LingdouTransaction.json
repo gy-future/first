@@ -1,0 +1,37 @@
+{
+  "name": "LingdouTransaction",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "用户ID"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "purchase",
+        "consume",
+        "reward"
+      ],
+      "description": "交易类型：购买、消费、奖励"
+    },
+    "amount": {
+      "type": "number",
+      "description": "灵豆数量（正数为增加，负数为消费）"
+    },
+    "reason": {
+      "type": "string",
+      "description": "交易原因"
+    },
+    "balance_after": {
+      "type": "number",
+      "description": "交易后余额"
+    }
+  },
+  "required": [
+    "user_id",
+    "type",
+    "amount",
+    "reason"
+  ]
+}
