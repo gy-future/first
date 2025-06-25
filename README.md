@@ -17,6 +17,4 @@ npm run dev
 npm run build
 ```
 
-For more information and support, please contact Base44 support at app@base44.com.# first
-# first
-# first
+For more information and support, please contact Base44 support at app@base44.com.

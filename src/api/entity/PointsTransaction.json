@@ -1,0 +1,41 @@
+{
+  "name": "PointsTransaction",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "用户ID"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "earn",
+        "spend",
+        "bonus"
+      ],
+      "description": "交易类型：获得、消费、奖励"
+    },
+    "amount": {
+      "type": "number",
+      "description": "积分数量（正数为获得，负数为消费）"
+    },
+    "reason": {
+      "type": "string",
+      "description": "交易原因"
+    },
+    "related_id": {
+      "type": "string",
+      "description": "关联的训练或兑换记录ID"
+    },
+    "balance_after": {
+      "type": "number",
+      "description": "交易后余额"
+    }
+  },
+  "required": [
+    "user_id",
+    "type",
+    "amount",
+    "reason"
+  ]
+}

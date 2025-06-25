@@ -1,0 +1,47 @@
+{
+  "name": "PointsExchange",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "用户ID"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "商品ID"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "商品名称"
+    },
+    "points_cost": {
+      "type": "number",
+      "description": "消耗积分数"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processed",
+        "delivered"
+      ],
+      "default": "pending",
+      "description": "兑换状态"
+    },
+    "exchange_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "兑换时间"
+    },
+    "delivery_info": {
+      "type": "string",
+      "description": "发货信息"
+    }
+  },
+  "required": [
+    "user_id",
+    "product_id",
+    "product_name",
+    "points_cost"
+  ]
+}

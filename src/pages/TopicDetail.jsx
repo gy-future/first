@@ -101,11 +101,12 @@ export default function TopicDetail() {
     try {
       setLoading(true);
       const urlParams = new URLSearchParams(window.location.search);
-      const topicId = urlParams.get('id');
+      const topicParam = urlParams.get('id') || urlParams.get('topic');
       
-      console.log("正在查找主题ID:", topicId);
+      console.log("TopicDetail - URL参数:", topicParam);
       
-      if (!topicId) {
+      if (!topicParam) {
+        console.log("没有找到主题参数");
         navigate(createPageUrl("Learning"));
         return;
       }
@@ -113,45 +114,188 @@ export default function TopicDetail() {
       const currentUser = await User.me();
       setUser(currentUser);
       
-      // 获取所有主题并查找匹配的
+      // 获取所有主题
       const allTopics = await Topic.list();
-      console.log("所有主题:", allTopics);
+      console.log("所有主题数量:", allTopics.length);
       
-      let foundTopic = allTopics.find(t => t.id === topicId);
-      console.log("尝试通过ID找到的主题:", foundTopic);
+      let foundTopic = null;
       
-      let actualTopic = foundTopic;
-
+      // 策略1: 直接通过ID匹配
+      foundTopic = allTopics.find(t => t.id === topicParam);
+      console.log("通过ID查找结果:", foundTopic?.name || "未找到");
+      
+      // 策略2: 通过名称匹配
       if (!foundTopic) {
-        // 尝试通过名称查找
-        const topicByName = allTopics.find(t => t.name === topicId);
-        if (topicByName) {
-          actualTopic = topicByName;
-          console.log("通过名称找到主题:", topicByName);
-        } else {
-          console.log("未找到主题，ID/名称:", topicId);
-        }
+        foundTopic = allTopics.find(t => t.name === topicParam);
+        console.log("通过名称查找结果:", foundTopic?.name || "未找到");
+      }
+      
+      // 策略3: 如果都没找到，从模拟数据中创建
+      if (!foundTopic) {
+        console.log("数据库中未找到，尝试从模拟数据创建");
+        foundTopic = createMockTopic(topicParam);
       }
 
-      setTopic(actualTopic); // Set topic state regardless of how it was found (or null if not found)
+      setTopic(foundTopic);
       
-      if (actualTopic) {
+      if (foundTopic) {
+        // 获取用户进度
         const progressData = await UserProgress.filter({ 
           user_id: currentUser.id, 
-          topic_id: actualTopic.id 
+          topic_id: foundTopic.id 
         });
         
         if (progressData.length > 0) {
           setUserProgress(progressData[0]);
+        } else {
+          setUserProgress(null); // Clear previous progress if not found
         }
       }
     } catch (error) {
-      console.log("数据加载失败", error);
-      // It's good practice to navigate back or show an error even if the topic wasn't found,
-      // as it implies an invalid state. The check below `if (!topic)` will also catch this.
+      console.error("数据加载失败", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // 创建模拟主题数据
+  const createMockTopic = (topicName) => {
+    // 检查是否为预定义的主题
+    const mockTopics = {
+      '晋升汇报': {
+        id: 'default_topic_求职招聘_求职应聘_晋升汇报',
+        name: '晋升汇报',
+        description: '掌握向上级汇报工作成果和申请晋升的核心技巧',
+        category_name: '求职招聘',
+        module_name: '求职应聘',
+        goal: '学会如何有效地向上级展示自己的工作成果，提高晋升成功率',
+        difficulty: '中级',
+        estimated_time: 45,
+        scenarios: [
+          '年度绩效汇报时展示个人价值',
+          '申请内部岗位调整时的表达技巧',
+          '向领导争取更多资源和机会'
+        ],
+        knowledge_points: [
+          {
+            name: '汇报框架设计',
+            content: '学习STAR法则：Situation（情境）、Task（任务）、Action（行动）、Result（结果）。\n\n在晋升汇报中，要清晰地描述：\n1. 面临的工作挑战或项目背景\n2. 承担的具体任务和职责\n3. 采取的关键行动和解决方案\n4. 取得的具体成果和影响\n\n记住，数据说话比空洞的形容词更有说服力。',
+            type: 'text'
+          },
+          {
+            name: '成果量化技巧',
+            content: '如何用数字证明你的价值：\n\n• 业绩提升：销售额增长30%、客户满意度提升至95%\n• 效率优化：流程优化节省2小时/天、错误率降低50%\n• 团队影响：培训新人5名、跨部门协作项目3个\n• 创新贡献：提出改进建议10条、实施落地3项\n\n用具体的百分比、时间、金额来展示你的贡献。',
+            type: 'text'
+          },
+          {
+            name: '沟通表达要点',
+            content: '晋升汇报的黄金法则：\n\n1. 开场：简洁明了地说明汇报目的\n2. 主体：按重要性排序展示成果\n3. 展望：说明未来的发展规划\n4. 结尾：明确表达晋升意愿\n\n语言技巧：\n• 用"我们团队"体现协作精神\n• 用"我负责/我主导"突出个人贡献\n• 避免过度谦虚，自信展示成果',
+            type: 'audio'
+          }
+        ]
+      },
+      '情商段位来比拼': {
+        id: 'default_topic_情商_情商识别_情商段位来比拼',
+        name: '情商段位来比拼',
+        description: '测试和提升你的情商水平，学会识别和管理情绪',
+        category_name: '情商',
+        module_name: '情商识别',
+        goal: '提高情绪识别能力和情商水平',
+        difficulty: '初级',
+        estimated_time: 30,
+        scenarios: [
+          '职场冲突中的情绪管理',
+          '团队合作中的情绪感知',
+          '客户服务中的共情能力'
+        ],
+        knowledge_points: [
+          {
+            name: '情商基础概念',
+            content: '情商包含四个核心维度：\n\n1. 自我情绪认知：能准确识别自己的情绪状态\n2. 自我情绪管理：能有效调节和控制情绪\n3. 他人情绪认知：能敏锐感知他人的情绪\n4. 关系管理：能运用情绪信息改善人际关系\n\n高情商的人在职场中通常表现更出色，领导力更强。',
+            type: 'text'
+          },
+          {
+            name: '情绪识别技巧',
+            content: '如何快速识别情绪：\n\n• 观察面部表情：眉头、眼神、嘴角的变化\n• 注意肢体语言：姿态、手势、距离感\n• 倾听语音语调：语速、音量、停顿\n• 感受能量状态：兴奋、低落、紧张、放松\n\n练习：每天观察3个人的情绪状态，记录你的判断和验证结果。',
+            type: 'video'
+          },
+          {
+            name: '情绪管理策略',
+            content: '常用的情绪调节方法：\n\n1. 深呼吸法：4秒吸气-4秒屏息-4秒呼气\n2. 认知重构：换个角度看问题\n3. 情绪命名：准确说出情绪类型\n4. 身体放松：肌肉松弛、适度运动\n5. 寻求支持：与信任的人分享\n\n记住：情绪本身没有对错，关键是如何合理表达和处理。',
+            type: 'text'
+          }
+        ]
+      },
+      '向上管理试炼场': {
+        id: 'default_topic_沟通_向上管理_向上管理试炼场',
+        name: '向上管理试炼场',
+        description: '学会与上级有效沟通，获得更多支持和发展机会',
+        category_name: '沟通',
+        module_name: '向上管理',
+        goal: '掌握向上管理的核心技巧，改善与上级的工作关系',
+        difficulty: '高级',
+        estimated_time: 60,
+        scenarios: [
+          '与不同风格的领导打交道',
+          '汇报工作进展和请求支持',
+          '处理与上级的意见分歧'
+        ],
+        knowledge_points: [
+          {
+            name: '了解你的上级',
+            content: '向上管理的第一步：了解领导的工作风格\n\n• 沟通偏好：邮件还是面谈？详细还是简洁？\n• 决策方式：数据驱动还是直觉判断？\n• 时间习惯：什么时候最容易接受新想法？\n• 压力来源：来自上级的压力点在哪里？\n• 价值观念：最看重什么样的工作成果？\n\n观察并适应领导的节奏，而不是让领导适应你。',
+            type: 'text'
+          },
+          {
+            name: '有效汇报技巧',
+            content: '让汇报更有效的5个要点：\n\n1. 准备充分：提前梳理要点，准备可能的问题\n2. 简洁明了：先说结论，再说过程\n3. 数据支撑：用事实和数据说话\n4. 方案导向：不只是报告问题，要提出解决方案\n5. 积极主动：主动更新进展，及时寻求指导\n\n汇报模板：目标-现状-问题-方案-需要的支持',
+            type: 'video'
+          },
+          {
+            name: '处理分歧和冲突',
+            content: '与上级意见不一致时的处理策略：\n\n• 理解立场：先了解领导的考虑角度\n• 表达观点：用"我认为"而不是"你错了"\n• 寻找共同点：找到双方都认同的目标\n• 提供选择：给出多个方案供领导选择\n• 尊重决定：即使不同意也要执行决定\n\n记住：向上管理不是操控，而是协作。',
+            type: 'text'
+          }
+        ]
+      }
+    };
+
+    // 如果找到预定义的主题，返回它
+    if (mockTopics[topicName]) {
+      return mockTopics[topicName];
+    }
+
+    // 否则创建一个通用的默认主题
+    return {
+      id: `default_topic_${topicName.replace(/\s/g, '_')}`,
+      name: topicName,
+      description: `${topicName}的详细学习内容`,
+      goal: `掌握${topicName}的核心概念和实用技巧`,
+      difficulty: '初级',
+      estimated_time: 30,
+      scenarios: [
+        `${topicName}的实际应用场景`,
+        `如何在工作中运用${topicName}`,
+        `${topicName}的进阶技巧`
+      ],
+      knowledge_points: [
+        {
+          name: `${topicName}基础概念`,
+          content: `这是${topicName}的基础学习内容。\n\n在这个章节中，您将学习：\n1. ${topicName}的基本定义和重要性\n2. ${topicName}在职场中的具体应用\n3. 掌握${topicName}的核心技巧\n\n通过系统的学习，您将能够熟练运用${topicName}来提升工作效率。`,
+          type: 'text'
+        },
+        {
+          name: `${topicName}实践技巧`,
+          content: `${topicName}的实践应用方法：\n\n• 第一步：理解核心原理\n• 第二步：观察实际案例\n• 第三步：模拟练习\n• 第四步：实际应用\n• 第五步：反思总结\n\n记住：理论结合实践，才能真正掌握技能。`,
+          type: 'video'
+        },
+        {
+          name: `${topicName}进阶应用`,
+          content: `进阶级的${topicName}应用策略：\n\n1. 深度理解：不仅知道怎么做，更要知道为什么\n2. 灵活运用：根据不同情况调整策略\n3. 持续改进：定期反思和优化方法\n4. 经验分享：与他人交流学习心得\n\n持续的学习和实践是成长的关键。`,
+          type: 'text'
+        }
+      ]
+    };
   };
 
   const handleStartLearning = () => {
@@ -185,9 +329,15 @@ export default function TopicDetail() {
       }
       
       setIsLearning(false);
-      loadData(); // 重新加载数据
+      
+      // 重新加载数据以确保状态更新
+      await loadData();
+      
+      // 显示成功提示
+      alert('恭喜！你已完成本主题的学习，现在可以开始训练了！');
     } catch (error) {
-      console.log("更新进度失败");
+      console.error("更新进度失败", error);
+      alert('保存学习进度时出现问题，请重试');
     }
   };
 
@@ -307,7 +457,7 @@ export default function TopicDetail() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* 头部 */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 pt-12 pb-8 px-6">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 pt-8 pb-8 px-6">
         <div className="max-w-sm mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Button 

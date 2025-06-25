@@ -1,0 +1,43 @@
+{
+  "name": "TrainingGoal",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "用户ID"
+    },
+    "daily_training_count": {
+      "type": "number",
+      "default": 1,
+      "description": "每日训练次数目标"
+    },
+    "weekly_training_count": {
+      "type": "number",
+      "default": 5,
+      "description": "每周训练次数目标"
+    },
+    "target_accuracy": {
+      "type": "number",
+      "default": 80,
+      "description": "目标正确率（百分比）"
+    },
+    "target_mastery_topics": {
+      "type": "number",
+      "default": 3,
+      "description": "目标精通主题数"
+    },
+    "reminder_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "是否开启提醒"
+    },
+    "reminder_time": {
+      "type": "string",
+      "default": "20:00",
+      "description": "提醒时间"
+    }
+  },
+  "required": [
+    "user_id"
+  ]
+}

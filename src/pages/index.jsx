@@ -18,6 +18,22 @@ import TrainingHistory from "./TrainingHistory";
 
 import Membership from "./Membership";
 
+import LingdouHistory from "./LingdouHistory";
+
+import PointsShop from "./PointsShop";
+
+import MyOrders from "./MyOrders";
+
+import TrainingGoals from "./TrainingGoals";
+
+import PointsHistory from "./PointsHistory";
+
+import ExchangeHistory from "./ExchangeHistory";
+
+import Settings from "./Settings";
+
+import LearningPath from "./LearningPath";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -39,6 +55,22 @@ const PAGES = {
     TrainingHistory: TrainingHistory,
     
     Membership: Membership,
+    
+    LingdouHistory: LingdouHistory,
+    
+    PointsShop: PointsShop,
+    
+    MyOrders: MyOrders,
+    
+    TrainingGoals: TrainingGoals,
+    
+    PointsHistory: PointsHistory,
+    
+    ExchangeHistory: ExchangeHistory,
+    
+    Settings: Settings,
+    
+    LearningPath: LearningPath,
     
 }
 
@@ -84,6 +116,22 @@ function PagesContent() {
                 <Route path="/TrainingHistory" element={<TrainingHistory />} />
                 
                 <Route path="/Membership" element={<Membership />} />
+                
+                <Route path="/LingdouHistory" element={<LingdouHistory />} />
+                
+                <Route path="/PointsShop" element={<PointsShop />} />
+                
+                <Route path="/MyOrders" element={<MyOrders />} />
+                
+                <Route path="/TrainingGoals" element={<TrainingGoals />} />
+                
+                <Route path="/PointsHistory" element={<PointsHistory />} />
+                
+                <Route path="/ExchangeHistory" element={<ExchangeHistory />} />
+                
+                <Route path="/Settings" element={<Settings />} />
+                
+                <Route path="/LearningPath" element={<LearningPath />} />
                 
             </Routes>
         </Layout>

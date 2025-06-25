@@ -1,0 +1,63 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "用户ID"
+    },
+    "order_number": {
+      "type": "string",
+      "description": "订单号"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "vip",
+        "lingdou",
+        "course"
+      ],
+      "description": "订单类型：会员、灵豆、课程"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "商品名称"
+    },
+    "amount": {
+      "type": "number",
+      "description": "金额"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1,
+      "description": "数量"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "订单状态：待支付、已支付、已取消、已退款"
+    },
+    "payment_method": {
+      "type": "string",
+      "description": "支付方式"
+    },
+    "order_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "订单日期"
+    }
+  },
+  "required": [
+    "user_id",
+    "order_number",
+    "type",
+    "product_name",
+    "amount"
+  ]
+}

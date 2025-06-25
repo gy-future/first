@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@/api/entities';
@@ -113,7 +114,7 @@ export default function Membership() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-red-100">
-      <div className="bg-gradient-to-r from-orange-500 to-red-600 pt-12 pb-16 px-6 text-white text-center shadow-lg">
+      <div className="bg-gradient-to-r from-orange-500 to-red-600 pt-8 pb-16 px-6 text-white text-center shadow-lg">
         <div className="max-w-md mx-auto relative">
           <Button variant="ghost" size="icon" className="absolute left-0 top-0 text-white hover:bg-white/20" onClick={() => navigate(-1)}>
             <ArrowLeft />

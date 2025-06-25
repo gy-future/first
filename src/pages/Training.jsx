@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Question, Topic, UserProgress, TrainingSession, User, LingdouTransaction } from '@/api/entities';
+import { Question, Topic, UserProgress, TrainingSession, User, LingdouTransaction, PointsTransaction } from '@/api/entities';
 import { InvokeLLM } from '@/api/integrations';
-import { ArrowLeft, Mic, Send, Volume2, Check, X, Loader2, ThumbsUp, ThumbsDown, Gem, Sparkles, Zap } from 'lucide-react'; // Added Zap
+import { ArrowLeft, Mic, Send, Volume2, Check, X, Loader2, ThumbsUp, ThumbsDown, Gem, Sparkles, Zap, Award, Gift } from 'lucide-react'; // Added Zap, Award, Gift
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -137,6 +137,14 @@ export default function Training() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const calculatePoints = (isCorrect, difficulty = 1) => {
+    // 基础积分：答对10分，答错5分
+    let basePoints = isCorrect ? 10 : 5;
+    // 难度系数：1-5对应1.0-1.5倍
+    let difficultyMultiplier = 1 + (difficulty - 1) * 0.1;
+    return Math.round(basePoints * difficultyMultiplier);
   };
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -280,13 +288,47 @@ export default function Training() {
     const correctCount = answers.filter(a => a.is_correct).length;
     const score = Math.round((correctCount / questions.length) * 100);
     setFinalScore(score);
-    setSessionFinished(true);
+    
+    // 计算本次训练获得的积分
+    let totalPoints = 0;
+    answers.forEach((answer, index) => {
+      const question = questions[index];
+      const points = calculatePoints(answer.is_correct, question?.difficulty || 1);
+      totalPoints += points;
+    });
+
+    // 奖励积分：根据正确率给予额外积分
+    let bonusPoints = 0;
+    if (score >= 90) bonusPoints = 20;
+    else if (score >= 80) bonusPoints = 15;
+    else if (score >= 70) bonusPoints = 10;
+    else if (score >= 60) bonusPoints = 5;
+
+    const finalTotalPoints = totalPoints + bonusPoints;
 
     try {
       if (!user || !currentTopic) {
         console.error("User or topic not loaded, cannot save user progress.");
         return;
       }
+
+      // 更新用户积分
+      const newPointsBalance = (user.points_balance || 0) + finalTotalPoints;
+      const newTotalEarned = (user.total_points_earned || 0) + finalTotalPoints;
+      
+      await User.updateMyUserData({
+        points_balance: newPointsBalance,
+        total_points_earned: newTotalEarned
+      });
+
+      // 记录积分交易
+      await PointsTransaction.create({
+        user_id: user.id,
+        type: 'earn',
+        amount: finalTotalPoints,
+        reason: `${currentTopic.name}训练完成 (${score}分)`,
+        balance_after: newPointsBalance
+      });
 
       const progressRecords = await UserProgress.filter({ user_id: user.id, topic_id: currentTopic.id });
 
@@ -327,6 +369,7 @@ export default function Training() {
         total_score: score,
         completion_date: new Date().toISOString(),
       });
+      setSessionFinished(true);
     } catch (error) {
       console.error("保存训练记录失败:", error);
     }
@@ -364,21 +407,144 @@ export default function Training() {
   }
 
   if (sessionFinished) {
+    const correctCount = answers.filter(a => a.is_correct).length;
+    let totalPoints = 0;
+    answers.forEach((answer, index) => {
+      const question = questions[index];
+      const points = calculatePoints(answer.is_correct, question?.difficulty || 1);
+      totalPoints += points;
+    });
+    
+    let bonusPoints = 0;
+    if (finalScore >= 90) bonusPoints = 20;
+    else if (finalScore >= 80) bonusPoints = 15;
+    else if (finalScore >= 70) bonusPoints = 10;
+    else if (finalScore >= 60) bonusPoints = 5;
+
+    const finalTotalPoints = totalPoints + bonusPoints;
+
+    // 根据得分确定等级和颜色
+    const getScoreLevel = (score) => {
+      if (score >= 90) return { level: '优秀', color: 'from-green-500 to-emerald-600', emoji: '🎉' };
+      if (score >= 80) return { level: '良好', color: 'from-blue-500 to-indigo-600', emoji: '👍' };
+      if (score >= 70) return { level: '及格', color: 'from-yellow-500 to-orange-500', emoji: '💪' };
+      return { level: '需提升', color: 'from-red-500 to-pink-600', emoji: '🔥' };
+    };
+
+    const scoreLevel = getScoreLevel(finalScore);
+
     return (
-      <div className="h-screen bg-gradient-to-br from-blue-600 to-indigo-700 flex flex-col items-center justify-center p-6 text-white text-center">
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-          <h2 className="text-2xl font-bold mb-2">训练完成！</h2>
-          <div className="w-48 h-48 rounded-full bg-white/20 flex flex-col items-center justify-center mx-auto my-8">
-            <span className="text-5xl font-bold">{finalScore}</span>
-            <span className="text-lg">分</span>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex flex-col items-center justify-center p-4 sm:p-6">
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden"
+        >
+          {/* 头部区域 */}
+          <div className={`bg-gradient-to-r ${scoreLevel.color} p-6 text-white text-center relative overflow-hidden`}>
+            {/* 背景装饰 */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
+            <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
+            
+            <div className="relative">
+              <div className="text-4xl mb-2">{scoreLevel.emoji}</div>
+              <h2 className="text-xl font-bold mb-2">训练完成！</h2>
+              <div className="text-3xl font-bold mb-1">{finalScore}分</div>
+              <div className="text-sm opacity-90">{scoreLevel.level}</div>
+            </div>
           </div>
-          <p className="mb-4">答对 {answers.filter(a => a.is_correct).length} / {questions.length} 题</p>
-          <div className="flex gap-4">
-            <Button variant="outline" className="text-white border-white/50" onClick={() => window.location.reload()}>再来一次</Button>
-            <Button className="bg-orange-500 hover:bg-orange-600" onClick={() => navigate(createPageUrl('TrainingHub'))}>返回训练</Button>
-            <Button className="bg-green-500 hover:bg-green-600" onClick={() => navigate(createPageUrl('TrainingHistory'))}>查看记录</Button>
+
+          {/* 内容区域 */}
+          <div className="p-6 space-y-4">
+            {/* 成绩统计 */}
+            <div className="text-center">
+              <p className="text-slate-600 mb-4">答对 {correctCount} / {questions.length} 题</p>
+              
+              {/* 积分奖励 */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Award className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <span className="font-semibold text-purple-800">获得积分</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-slate-600">
+                    <span>答题积分:</span>
+                    <span className="font-medium">+{totalPoints}</span>
+                  </div>
+                  {bonusPoints > 0 && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>表现奖励:</span>
+                      <span className="font-medium text-green-600">+{bonusPoints}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-purple-200 pt-2">
+                    <div className="flex justify-between font-bold text-purple-700">
+                      <span>总计:</span>
+                      <span>+{finalTotalPoints} 积分</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 操作按钮 */}
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.reload()}
+                  className="text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
+                >
+                  再来一次
+                </Button>
+                <Button 
+                  onClick={() => navigate(createPageUrl('TrainingHub'))}
+                  className={`bg-gradient-to-r ${scoreLevel.color} hover:opacity-90 text-white font-medium transition-all duration-200`}
+                >
+                  返回训练
+                </Button>
+              </div>
+              
+              <Button 
+                onClick={() => navigate(createPageUrl('PointsShop'))}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium"
+              >
+                <Gift className="w-4 h-4 mr-2" />
+                积分商城
+              </Button>
+            </div>
+
+            {/* 鼓励文案 */}
+            <div className="text-center pt-2">
+              {finalScore >= 90 ? (
+                <p className="text-sm text-green-600 font-medium">🌟 表现优秀！继续保持！</p>
+              ) : finalScore >= 80 ? (
+                <p className="text-sm text-blue-600 font-medium">👏 做得不错！再接再厉！</p>
+              ) : finalScore >= 70 ? (
+                <p className="text-sm text-yellow-600 font-medium">💪 继续努力，你会更好！</p>
+              ) : (
+                <p className="text-sm text-red-600 font-medium">🔥 多练习几次，一定能提高！</p>
+              )}
+            </div>
           </div>
         </motion.div>
+
+        {/* 底部提示 */}
+        {currentTopic && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.5 }}
+            className="mt-4 text-center"
+          >
+            <p className="text-sm text-slate-500">
+              刚刚完成了 <span className="font-medium text-slate-700">{currentTopic.name}</span> 的训练
+            </p>
+          </motion.div>
+        )}
       </div>
     );
   }
@@ -388,7 +554,7 @@ export default function Training() {
       <header className="bg-white border-b px-4 py-3 sticky top-0 z-10">
         <div className="max-w-xl mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="touch-manipulation">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <span className="text-sm font-medium text-slate-600">
@@ -396,7 +562,7 @@ export default function Training() {
             </span>
             <div className="w-10"></div>
           </div>
-          <Progress value={progress} className="h-1.5" />
+          <Progress value={progress} className="h-2" />
         </div>
       </header>
 
@@ -408,15 +574,15 @@ export default function Training() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
             >
               <Card className="shadow-lg overflow-hidden">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4 mb-8">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white">
-                      <Volume2 className="w-6 h-6" />
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-start gap-3 sm:gap-4 mb-6 sm:mb-8">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white">
+                      <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    <p className="font-semibold text-slate-800 text-lg leading-relaxed pt-2">{currentQuestion.content}</p>
+                    <p className="font-semibold text-slate-800 text-base sm:text-lg leading-relaxed pt-1 sm:pt-2">{currentQuestion.content}</p>
                   </div>
 
                   {/* Question Type Content */}
@@ -426,20 +592,20 @@ export default function Training() {
                         <div
                           key={option.label}
                           onClick={() => handleOptionSelect(option)}
-                          className={`flex items-start gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${
+                          className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 touch-manipulation ${
                             showResult && option.is_correct ? 'bg-green-50 border-green-500 shadow-md' :
                             showResult && selectedOption?.label === option.label && !option.is_correct ? 'bg-red-50 border-red-500 shadow-md' :
-                            'bg-white hover:border-blue-400 hover:bg-blue-50'
+                            'bg-white hover:border-blue-400 hover:bg-blue-50 active:scale-[0.98]'
                           }`}
                         >
-                          <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold ${
+                          <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-sm sm:text-base ${
                             showResult && (option.is_correct || selectedOption?.label === option.label) ?
                               (option.is_correct ? 'border-green-500 bg-green-500 text-white' : 'border-red-500 bg-red-500 text-white') :
                               'border-slate-300 text-slate-500'
                           }`}>
-                            {showResult ? (option.is_correct ? <Check size={16} /> : <X size={16} />) : option.label}
+                            {showResult ? (option.is_correct ? <Check size={14} /> : <X size={14} />) : option.label}
                           </div>
-                          <span className="flex-1 text-slate-700">{option.content}</span>
+                          <span className="flex-1 text-slate-700 text-sm sm:text-base">{option.content}</span>
                         </div>
                       ))}
                     </div>
@@ -448,9 +614,9 @@ export default function Training() {
                   {currentQuestion.type === 'voice' && !showResult && (
                      <div className="text-center space-y-4">
                         <div className="flex justify-center">
-                          <Button variant="outline" size="sm" onClick={handleGetInspiration} disabled={isLoadingInspiration}>
+                          <Button variant="outline" size="sm" onClick={handleGetInspiration} disabled={isLoadingInspiration} className="touch-manipulation">
                             <Sparkles className={`mr-2 h-4 w-4 text-blue-500`} />
-                            AI回答灵感
+                            <span className="text-sm">AI回答灵感</span>
                             <div className="ml-2 flex items-center gap-1 text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">
                               <Zap className="w-3 h-3" />
                               1灵豆
@@ -470,12 +636,12 @@ export default function Training() {
                             value={transcript}
                             onChange={(e) => setTranscript(e.target.value)}
                             placeholder="在这里输入您的回答..."
-                            className="w-full h-40 p-4 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            className="w-full h-32 sm:h-40 p-4 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm sm:text-base"
                         />
                         <Button 
                             onClick={handleVoiceSubmit}
                             disabled={isProcessingAI || transcript.length < 10}
-                            className="bg-blue-600 hover:bg-blue-700 rounded-full px-8 py-6 text-base"
+                            className="bg-blue-600 hover:bg-blue-700 rounded-full px-6 sm:px-8 py-3 sm:py-6 text-sm sm:text-base w-full sm:w-auto touch-manipulation"
                         >
                             {isProcessingAI ? <Loader2 className="animate-spin mr-2" /> : <Send className="mr-2" />}
                             {isProcessingAI ? 'AI分析中...' : '提交回答'}
@@ -489,7 +655,7 @@ export default function Training() {
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mt-8"
+                      className="mt-6 sm:mt-8"
                     >
                       {currentQuestion.type === 'choice' && (
                         <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
@@ -501,20 +667,20 @@ export default function Training() {
                         <AIFeedback feedback={aiFeedback} />
                       )}
 
-                      {/* 按钮区域 */}
-                      <div className="flex gap-3 mt-6">
+                      {/* 按钮区域 - 移动端优化 */}
+                      <div className="flex flex-col sm:flex-row gap-3 mt-6">
                         {currentQuestion.type === 'voice' && aiFeedback && !aiFeedback.passed && (
                           <Button
                             onClick={handleRetryQuestion}
                             variant="outline"
-                            className="flex-1 border-orange-300 text-orange-600 hover:bg-orange-50"
+                            className="w-full sm:flex-1 border-orange-300 text-orange-600 hover:bg-orange-50 touch-manipulation"
                           >
                             重新回答
                           </Button>
                         )}
                         <Button
                           onClick={handleNextQuestion}
-                          className={`${currentQuestion.type === 'voice' && aiFeedback && !aiFeedback.passed ? 'flex-1' : 'w-full'} bg-orange-500 hover:bg-orange-600 rounded-full py-6 text-base`}
+                          className={`${currentQuestion.type === 'voice' && aiFeedback && !aiFeedback.passed ? 'w-full sm:flex-1' : 'w-full'} bg-orange-500 hover:bg-orange-600 rounded-full py-3 sm:py-6 text-sm sm:text-base touch-manipulation`}
                         >
                           {currentQuestionIndex < questions.length - 1 ? '下一题' : '完成训练'}
                         </Button>

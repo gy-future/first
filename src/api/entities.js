@@ -13,6 +13,14 @@ export const Question = base44.entities.Question;
 
 export const LingdouTransaction = base44.entities.LingdouTransaction;
 
+export const TrainingGoal = base44.entities.TrainingGoal;
+
+export const Order = base44.entities.Order;
+
+export const PointsTransaction = base44.entities.PointsTransaction;
+
+export const PointsExchange = base44.entities.PointsExchange;
+
 
 
 // auth sdk:
